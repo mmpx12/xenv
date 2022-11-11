@@ -41,6 +41,8 @@ func CheckEnv(client *http.Client, url, path string) {
 		return
 	}
 	req.Header.Add("User-Agent", userAgent)
+	//prevent RAM exhaustion from large body
+	req.Header.Set("Range", "bytes=0-4000")
 	resp, err := client.Do(req)
 	if err != nil {
 		<-thread
@@ -49,10 +51,19 @@ func CheckEnv(client *http.Client, url, path string) {
 	if resp.Body != nil {
 		defer resp.Body.Close()
 	}
-	body, _ := ioutil.ReadAll(resp.Body)
-	match, _ := regexp.MatchString(`(?m)<body|<script|<html>`, string(body))
-	if len(body) >= 2500 || match {
-		fmt.Println("\nmatchhhh\n")
+
+	//prevent RAM exhaustion from large body if range header isn't honored
+	body, err := ioutil.ReadAll(io.LimitReader(resp.Body, 4000))
+	if err != nil {
+		<-thread
+		return
+	}
+	match, err := regexp.MatchString(`(?m)<body|<script|<html>`, string(body))
+	if err != nil {
+		<-thread
+		return
+	}
+	if len(body) >= 3500 || match {
 		<-thread
 		return
 	}
@@ -60,11 +71,11 @@ func CheckEnv(client *http.Client, url, path string) {
 	if r.MatchString(string(body)) {
 		all := r.FindAllString(string(body), -1)
 		if len(all) > 5 {
-			success++
 			mu.Lock()
+			success++
 			WriteToFile(resp.Request.URL.String())
 			mu.Unlock()
-			fmt.Println("\033[1K\rENV FOUND:\033[36m", resp.Request.URL.String(), "\033[0m")
+			fmt.Println("\033[1K\rENV FOUND:\033[36m", resp.Request.URL.String()+"\033[0m")
 			for _, j := range all {
 				v := strings.Split(j, "=")
 				fmt.Println("\033[33m" + v[0] + "\033[0m=\033[35m" + v[1])
