@@ -1,0 +1,4 @@
+github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2 h1:tjT4Jp4gxECvsJcYpAMtW2I3YqzBTPuB67OejxXs86s=
+github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2/go.mod h1:mk5IQ+Y0ZeO87b858TlA645sVcEcbiX6YqP98kt+7+w=
+github.com/mmpx12/optionparser v1.0.4 h1:ka3XoO+66BNRv+/9254Z54scHh+69cqAIKyNqmFh+n0=
+github.com/mmpx12/optionparser v1.0.4/go.mod h1:0uTIIu3p8sZHYJq/wxSieaTxUVJTWPc0clW25iTMUAs=
