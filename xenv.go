@@ -29,7 +29,7 @@ var (
 	output    = "found_env.txt"
 	proxy     string
 	insecure  bool
-	version   = "alpha:dev"
+	version   = "1.0.2"
 	userAgent = "Mozilla/5.0 (X11; Linux x86_64)"
 	path      = []string{"/.env"}
 )
@@ -68,13 +68,11 @@ func CheckEnv(client *http.Client, url, path string) {
 		<-thread
 		return
 	}
-	//r := regexp.MustCompile(`(?m)^([A-Za-z0-9-]|[-_#]|^[\s\.]){1,35}[\s]?\=.{1,100}`)
 	r := regexp.MustCompile(`(?m)^([A-Za-z0-9#-_]){1,35}[\s]{0,10}=.{2,100}$`)
 	if r.MatchString(string(body)) {
 		all := r.FindAllString(string(body), -1)
 		if len(all) > 5 {
 			mu.Lock()
-			//success++
 			atomic.AddInt32(&success, 1)
 			WriteToFile("============================\n" + resp.Request.URL.String())
 			fmt.Println("\033[1K\r\033[32mENV FOUND:\033[36m", resp.Request.URL.String()+"\033[0m")
@@ -116,17 +114,20 @@ func LineNBR(f string) int {
 }
 
 func main() {
-	var threads, input string
+	var threads, input, env string
 	var printversion bool
 	op := optionparser.NewOptionParser()
-	op.Banner = "Scan for exposed git repos\n\nUsage:\n"
+	op.Banner = "Scan for exposed env file\n\nUsage:\n"
 	op.On("-t", "--thread NBR", "Number of threads (default 50)", &threads)
-	op.On("-o", "--output FILE", "Output file (default found_git.txt)", &output)
+	op.On("-o", "--output FILE", "Output file (default found_env.txt)", &output)
 	op.On("-i", "--input FILE", "Input file", &input)
+	op.On("-e", "--env-path ENV", "Env Path comma sparated (default '/.env')", &env)
 	op.On("-k", "--insecure", "Ignore certificate errors", &insecure)
 	op.On("-u", "--user-agent USR", "Set user agent", &userAgent)
 	op.On("-p", "--proxy PROXY", "Use proxy (proto://ip:port)", &proxy)
 	op.On("-V", "--version", "Print version and exit", &printversion)
+	op.Exemple("xenv -i alexa-top-1M.lst")
+	op.Exemple("xenv -k -e /.env,/api/.env,/admin/.env -i alexa-top-1M.lst")
 	op.Parse()
 	fmt.Printf("\033[31m")
 	op.Logo("[X-env]", "doom", false)
@@ -147,6 +148,11 @@ func main() {
 		op.Help()
 		os.Exit(1)
 	}
+
+	if env != "" {
+		path = strings.Split(env, ",")
+	}
+
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 		Transport: &http.Transport{
@@ -175,6 +181,7 @@ func main() {
 	fileScanner.Split(bufio.ScanLines)
 	i := 0
 	total := LineNBR(input) * len(path)
+
 	for fileScanner.Scan() {
 		target := fileScanner.Text()
 		for _, p := range path {
@@ -188,5 +195,5 @@ func main() {
 		}
 	}
 	wg.Wait()
-	fmt.Printf("\033[1K\rFound %d git repos.\n", success)
+	fmt.Printf("\033[1K\rFound %d env files.\n", success)
 }

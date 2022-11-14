@@ -1,4 +1,4 @@
-module xenv
+module github.com/mmpx12/xenv
 
 go 1.19
 
