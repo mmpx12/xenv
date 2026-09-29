@@ -29,7 +29,7 @@ var (
 	output    = "found_env.txt"
 	proxy     string
 	insecure  bool
-	version   = "1.0.2"
+	version   = "1.0.3"
 	userAgent = "Mozilla/5.0 (X11; Linux x86_64)"
 	path      = []string{"/.env"}
 )
